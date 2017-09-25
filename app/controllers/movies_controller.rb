@@ -11,13 +11,23 @@ class MoviesController < ApplicationController
   end
 
   def index
+    unless params[:ratings]
+      @rating_choices = ["G", "PG", "PG-13", "R"]
+    else
+      @rating_choices = params[:ratings].keys
+    end
+    #Not sure why the following line isn't working, so I'm just gonna hard code it :(
+    # @all_ratings = Movie.all_ratings
+    @all_ratings = ["G","PG","PG-13","R"]
     #Using unless is probably backwards here, but I felt like putting the default case first
     unless params[:sorting] == "Date"
-      @movies = Movie.all.sort {|mov, other| mov.title <=> other.title}
+      #@movies = Movie.all.sort {|mov, other| mov.title <=> other.title}
+      @movies = Movie.where({rating: @rating_choices}).reorder('title')
       @titleClass = "hilite"
       @dateClass = ""
     else
-      @movies = Movie.all.sort {|mov, other| mov.release_date <=> other.release_date}
+      #@movies = Movie.all.sort {|mov, other| mov.release_date <=> other.release_date}
+      @movies = Movie.where({rating: @rating_choices}).reorder('release_date')
       @titleClass = ""
       @dateClass = "hilite"
     end
