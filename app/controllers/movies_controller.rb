@@ -11,7 +11,16 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
+    #Using unless is probably backwards here, but I felt like putting the default case first
+    unless params[:sorting] == "Date"
+      @movies = Movie.all.sort {|mov, other| mov.title <=> other.title}
+      @titleClass = "hilite"
+      @dateClass = ""
+    else
+      @movies = Movie.all.sort {|mov, other| mov.release_date <=> other.release_date}
+      @titleClass = ""
+      @dateClass = "hilite"
+    end
   end
 
   def new
