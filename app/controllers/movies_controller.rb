@@ -13,10 +13,22 @@ class MoviesController < ApplicationController
   def index
     #it may not be the best solution, but I thought to feed the array given to the checkboxes both the name and if it is chosen.
     #rating_choices is what I assign that to. Rating_selections is just the array of checked ratings for the filtering code.
-    unless params[:ratings]
-      @rating_choices = [{name:"G", chosen: true}, {name: "PG", chosen: true}, {name: "PG-13", chosen: true},{name: "R", chosen: true}]
-      rating_selections = ["G", "PG", "PG-13", "R"]
+    unless params[:ratings] && params[:ratings] != {}
+      if !session[:ratings] || session[:ratings] == {}
+        #Case: user opens page for first time
+        redirecting = false
+        @rating_choices = [{name:"G", chosen: true}, {name: "PG", chosen: true}, {name: "PG-13", chosen: true},{name: "R", chosen: true}]
+        rating_selections = ["G", "PG", "PG-13", "R"]
+      else
+        redirecting = true
+        flash.keep
+        theHash = params
+        theHash[:ratings] = session[:ratings]
+        redirect_to movies_path(theHash)
+      end
     else
+      redirecting = false
+      session[:ratings] = params[:ratings]
       rating_selections = params[:ratings].keys
       @rating_choices = [{name:"G", chosen: false}, {name: "PG", chosen: false}, {name: "PG-13", chosen: false},{name: "R", chosen: false}]
       rating_selections.each do |rating|
@@ -27,16 +39,23 @@ class MoviesController < ApplicationController
     # @all_ratings = Movie.all_ratings
     # @all_ratings = ["G","PG","PG-13","R"]
     #Using unless is probably backwards here, but I felt like putting the default case first
-    unless params[:sorting] == "Date"
-      #@movies = Movie.all.sort {|mov, other| mov.title <=> other.title}
-      @movies = Movie.where({rating: rating_selections}).reorder('title')
-      @titleClass = "hilite"
-      @dateClass = ""
-    else
+    if params[:sorting] == "Date"
       #@movies = Movie.all.sort {|mov, other| mov.release_date <=> other.release_date}
       @movies = Movie.where({rating: rating_selections}).reorder('release_date')
       @titleClass = ""
       @dateClass = "hilite"
+      session[:sorting] = params[:sorting]
+    elsif params[:sorting] || !session[:sorting]
+      #@movies = Movie.all.sort {|mov, other| mov.title <=> other.title}
+      @movies = Movie.where({rating: rating_selections}).reorder('title')
+      @titleClass = "hilite"
+      @dateClass = ""
+      session[:sorting] = params[:sorting]
+    elsif !redirecting
+      flash.keep
+      theHash = params
+      theHash[:sorting] = session[:sorting]
+      redirect_to movies_path(theHash)
     end
   end
 
